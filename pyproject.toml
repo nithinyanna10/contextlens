@@ -43,3 +43,6 @@ files = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "stress: offline stress tests — synthetic payloads, no API calls",
+]
