@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, computed_field, model_validator
 
-ProviderName = Literal["openai", "anthropic"]
+ProviderName = Literal["openai", "anthropic", "unknown"]
 
 UsageSource = Literal[
     "response_usage",  # read from response.usage — authoritative
@@ -18,7 +18,7 @@ ComponentTag = Literal[
     "retrieved",
     "tool_output",
     "scratchpad",
-    "formatting",  # role markers, BOS, message framing — absorbs gap vs usage.input_tokens
+    "formatting",  # role markers, BOS, message framing — absorbs gap vs usage.total_input_tokens
 ]
 
 
@@ -35,15 +35,31 @@ class TokenSpan(BaseModel):
 class UsageRecord(BaseModel):
     """Token counts as reported by the provider API.
 
+    input_tokens: new (uncached) tokens only, as the provider reports.
+    cache_read_input_tokens: tokens served from an existing cache entry.
+        Anthropic: cache_read_input_tokens. OpenAI: prompt_tokens_details.cached_tokens.
+        Default 0 so old JSONL stays loadable.
+    cache_creation_input_tokens: tokens written to a new cache entry (Anthropic only).
+        Default 0.
+    total_input_tokens: computed — full context-window occupancy. Use this for
+        budget checks and rot-risk scoring; a cached token occupies window space
+        identically to a new one.
+
     source="response_usage" is the only authoritative value.
-    "estimated" and "exact" are pre-call modes.
     """
 
     model_config = ConfigDict(frozen=True)
 
     provider: ProviderName
     input_tokens: int
+    cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
     source: UsageSource
+
+    @computed_field
+    @property
+    def total_input_tokens(self) -> int:
+        return self.input_tokens + self.cache_read_input_tokens + self.cache_creation_input_tokens
 
 
 class CapturedCall(BaseModel):
@@ -51,10 +67,10 @@ class CapturedCall(BaseModel):
 
     For realized calls (usage is not None), every span's token_count is a
     tiktoken ESTIMATE — not the provider total. The 'formatting' span carries
-    the gap between content estimates and usage.input_tokens so that
-    sum(all spans) == usage.input_tokens exactly.
+    the gap between content estimates and usage.total_input_tokens so that
+    sum(all spans) == usage.total_input_tokens exactly.
 
-    Do NOT assert sum(non-formatting spans) == usage.input_tokens.
+    Do NOT assert sum(non-formatting spans) == usage.total_input_tokens.
     That is always false and the failure is correct.
     """
 
@@ -72,9 +88,10 @@ class CapturedCall(BaseModel):
         if self.usage is None:
             return self
         span_total = sum(s.token_count for s in self.spans)
-        if span_total != self.usage.input_tokens:
+        if span_total != self.usage.total_input_tokens:
             raise ValueError(
-                f"sum(spans)={span_total} != usage.input_tokens={self.usage.input_tokens}. "
+                f"sum(spans)={span_total} != usage.total_input_tokens="
+                f"{self.usage.total_input_tokens}. "
                 "Add a 'formatting' span to absorb role/framing overhead."
             )
         return self
