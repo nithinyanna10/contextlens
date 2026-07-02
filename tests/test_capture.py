@@ -45,6 +45,7 @@ def test_captured_call_has_usage_field_with_correct_shape():
     assert call.usage is not None
     assert call.usage.provider == "openai"
     assert call.usage.input_tokens == _API_TOTAL
+    assert call.usage.total_input_tokens == _API_TOTAL  # no cache → total == input_tokens
     assert call.usage.source == "response_usage"
 
 
@@ -66,21 +67,21 @@ def test_content_spans_alone_do_not_equal_usage():
     """tiktoken estimates for content never reach provider total — that is expected."""
     call = _realized_call()
     content_sum = sum(s.token_count for s in call.spans if s.component != "formatting")
-    assert content_sum < call.usage.input_tokens
+    assert content_sum < call.usage.total_input_tokens
 
 
 def test_formatting_span_reconciles_to_usage():
-    """content + formatting == usage.input_tokens (the accounting identity)."""
+    """content + formatting == usage.total_input_tokens (the accounting identity)."""
     call = _realized_call()
     content_sum = sum(s.token_count for s in call.spans if s.component != "formatting")
     fmt = next(s.token_count for s in call.spans if s.component == "formatting")
-    assert content_sum + fmt == call.usage.input_tokens
+    assert content_sum + fmt == call.usage.total_input_tokens
 
 
 def test_all_spans_sum_to_usage():
     """Validator enforces this; test makes it explicit."""
     call = _realized_call()
-    assert sum(s.token_count for s in call.spans) == call.usage.input_tokens
+    assert sum(s.token_count for s in call.spans) == call.usage.total_input_tokens
 
 
 # --- validator ----------------------------------------------------------------
