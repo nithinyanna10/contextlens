@@ -168,11 +168,11 @@ _DEFAULT_CONTEXT = 128_000
 def check_rot_risk(call: CapturedCall, below: float) -> list[Violation]:
     """Score = total_tokens / context_window. Violation if score >= below.
 
-    Total taken from usage.input_tokens when realized; span sum otherwise.
+    Total taken from usage.total_input_tokens when realized; span sum otherwise.
     Context window is a heuristic table entry — cite this in any report.
     """
     total = (
-        call.usage.input_tokens
+        call.usage.total_input_tokens
         if call.usage is not None
         else sum(s.token_count for s in call.spans)
     )
