@@ -63,11 +63,9 @@ The `0 violation(s)` in the section footer reflects the default rot-risk check o
 
 ## Report
 
-<!-- screenshot: replace with real terminal capture -->
-
 The bar is a stacked `█` block, each segment color-coded by component
-(system=green, history=yellow, retrieved=cyan, formatting=dim). The mock
-below is ANSI-stripped; run the command to see color and segment boundaries.
+(system=green, history=yellow, retrieved=cyan, formatting=dim). ANSI-stripped
+below; run the command to see color and segment boundaries.
 
 ```
 $ contextlens report examples/demo.jsonl --contract examples/contract.json
@@ -82,7 +80,7 @@ Call 0  gpt-4o  [openai]  (exact)
   total: 146 tokens
 
 Call 2  gpt-4o  [openai]  (exact)
-  █████████████████████████████████████████████████████████████
+  ████████████████████████████████████████████████████████████
   component       tokens  proportion  notes
   system              20       2.9%
   history             60       8.7%
