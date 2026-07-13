@@ -116,7 +116,7 @@ contextlens fills that gap.
 ## Install
 
 ```
-pip install contextlens
+pip install pytest-contextlens
 ```
 
 The pytest plugin registers automatically on install. No conftest import needed.
