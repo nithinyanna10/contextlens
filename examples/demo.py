@@ -46,7 +46,7 @@ if __name__ == "__main__":
         make_call(2, history_tokens=60,  retrieved_tokens=600),   # turn 3:  686 tokens, fine
         make_call(4, history_tokens=200, retrieved_tokens=4_200), # turn 5: 4426 tokens, over budget
     ]
-    out = Path("examples/demo.jsonl")
+    out = Path(__file__).parent / "demo.jsonl"
     dump_calls(calls, out)
     print(f"Wrote {len(calls)} calls to {out}")
     print("Next: contextlens report examples/demo.jsonl --contract examples/contract.json")
