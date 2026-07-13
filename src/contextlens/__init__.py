@@ -1,3 +1,3 @@
 from importlib.metadata import version as _v
 
-__version__ = _v("contextlens")
+__version__ = _v("pytest-contextlens")
