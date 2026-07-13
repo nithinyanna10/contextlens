@@ -3,9 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "contextlens"
+name = "pytest-contextlens"
 version = "0.1.0"
 description = "pytest-native context-window linter for LLM agents"
+license = {file = "LICENSE"}
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
